@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="2026년 퇴직자용 실업급여 예상액 계산기. 퇴직 당시 나이와 고용보험 가입기간으로 구직급여 지급일수와 총액을 계산합니다.">
+<title>2026 실업급여 예상액 계산기 | 50대 생활비 연구소</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef3ed;color:#172b23;font:17px/1.6 system-ui,sans-serif}
+main{max-width:1000px;margin:auto;padding:clamp(18px,5vw,55px)}
+header{margin-bottom:28px}
+h1{font-size:clamp(29px,5vw,48px);line-height:1.18;margin:8px 0}
+h2{font-size:22px;margin:0 0 15px}
+p{margin:8px 0}
+.brand{color:#285945;font-weight:800}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.card{background:white;border:1px solid #cfdbd2;border-radius:18px;padding:clamp(16px,3vw,29px)}
+.result{background:#173d32;color:white;border-color:#173d32}
+label{display:block;font-weight:700;margin:14px 0 5px}
+input,select,button{font:inherit}
+input,select{width:100%;padding:10px;border:1px solid #82968b;border-radius:8px;background:white;color:#172b23}
+small{display:block;margin-top:5px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+button{padding:9px 13px;border:1px solid #285945;border-radius:8px;background:white;color:#285945;cursor:pointer;font-weight:700}
+button[type=submit]{background:#285945;color:white}
+:focus-visible{outline:3px solid #a85a0d;outline-offset:3px}
+dl{margin:0}
+dt{border-top:1px solid #779088;padding-top:10px;margin-top:12px}
+dd{margin:0;font-weight:800;font-size:clamp(24px,4vw,35px)}
+a{color:#21553f;text-underline-offset:3px}
+footer{margin-top:22px;font-size:15px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<p class="brand">50대 생활비 연구소</p>
+<h1>실업급여 예상액 계산기</h1>
+<p>2026년 퇴직한 하루 8시간 상용근로자 기준입니다.</p>
+</header>
+<div class="grid">
+<form class="card" id="calculator">
+<h2>퇴직 당시 정보</h2>
+<label for="mode">임금 입력 기준</label>
+<select id="mode">
+<option value="monthly">퇴직 전 3개월 평균 월급</option>
+<option value="daily">급여 산정에 적용되는 1일 기초임금</option>
+</select>
+<label for="wage" id="wage-label">세전 평균 월급 (원)</label>
+<input id="wage" type="number" inputmode="numeric" min="1" step="1" required aria-describedby="wage-hint">
+<small id="wage-hint">평균 월급을 30으로 나누어 추정합니다.</small>
+<label for="group">퇴직 당시 나이와 장애인 해당 여부</label>
+<select id="group" required>
+<option value="">선택하세요</option>
+<option value="under">50세 미만 · 장애인 미해당</option>
+<option value="extended">50세 이상 또는 장애인</option>
+</select>
+<label for="period">고용보험 피보험기간</label>
+<select id="period" required>
+<option value="">선택하세요</option>
+<option value="0">1년 미만</option>
+<option value="1">1년 이상 ~ 3년 미만</option>
+<option value="2">3년 이상 ~ 5년 미만</option>
+<option value="3">5년 이상 ~ 10년 미만</option>
+<option value="4">10년 이상</option>
+</select>
+<div class="actions">
+<button type="submit">예상액 계산</button>
+<button type="button" id="example">예시 넣기</button>
+<button type="reset">초기화</button>
+</div>
+</form>
+<section class="card result" aria-labelledby="result-title">
+<h2 id="result-title">예상 지급액</h2>
+<div aria-live="polite">
+<p id="waiting">퇴직 당시 정보를 입력하면 예상액이 표시됩니다.</p>
+<div id="values" hidden>
+<dl>
+<dt>총 예상 구직급여</dt><dd id="total"></dd>
+<dt>1일 예상 지급액</dt><dd id="daily"></dd>
+<dt>예상 지급일수</dt><dd id="days"></dd>
+<dt>28일분 환산액</dt><dd id="equivalent"></dd>
+</dl>
+<p id="basis"></p>
+<small>실제 회차별 입금액은 실업인정일수에 따라 달라집니다.</small>
+</div>
+</div>
+</section>
+</div>
+<footer>
+<p>2026년 하루 8시간 기준 1일 하한액은 66,048원, 상한액은 68,100원입니다. 기초임금의 60%에 상·하한을 적용합니다.</p>
+<p>수급자격이 인정되고 지급일수를 모두 채운 경우의 추정액입니다. 수급자격과 실제 지급액은 관할 고용센터에서 확인할 수 있습니다.</p>
+<p><a href="https://www.work24.go.kr/cm/c/f/1100/selecSimulate.do?systClId=SC00000010&amp;systId=SI00000001">고용24 공식 모의계산</a> · <a href="https://gonggam.korea.kr/gonggamWeb/publication/pdf/2026_K_ladder_of_hope.pdf">2026년 정부 지원 안내</a></p>
+</footer>
+</main>
+<script>
+const get = id => document.getElementById(id);
+const form = get('calculator');
+const mode = get('mode');
+const wage = get('wage');
+const group = get('group');
+const period = get('period');
+const payoutDays = {
+  under: [120, 150, 180, 210, 240],
+  extended: [120, 180, 210, 240, 270]
+};
+const format = new Intl.NumberFormat('ko-KR');
+
+function estimate(amount, inputMode, ageGroup, insuredPeriod) {
+  const base = inputMode === 'monthly' ? amount / 30 : amount;
+  const daily = Math.min(68100, Math.max(66048, Math.round(base * 0.6)));
+  const days = payoutDays[ageGroup][insuredPeriod];
+  return {daily, days, total: daily * days, equivalent: daily * 28};
+}
+
+function clearResult() {
+  get('values').hidden = true;
+  get('waiting').hidden = false;
+}
+
+function syncWageLabel() {
+  const monthly = mode.value === 'monthly';
+  get('wage-label').textContent = monthly ? '세전 평균 월급 (원)' : '1일 기초임금 (원)';
+  get('wage-hint').textContent = monthly
+    ? '평균 월급을 30으로 나누어 추정합니다.'
+    : '고용센터에서 확인한 구직급여 산정용 1일 기초임금을 입력하세요.';
+}
+
+mode.addEventListener('change', () => {
+  wage.value = '';
+  syncWageLabel();
+});
+form.addEventListener('input', clearResult);
+form.addEventListener('reset', () => {
+  clearResult();
+  queueMicrotask(syncWageLabel);
+});
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  const result = estimate(wage.valueAsNumber, mode.value, group.value, Number(period.value));
+  for (const [key, value] of Object.entries(result)) {
+    get(key).textContent = format.format(value) + (key === 'days' ? '일' : '원');
+  }
+  get('basis').textContent = mode.value === 'monthly' ? '월급을 30일로 나눈 간편 추정 결과입니다.' : '';
+  get('waiting').hidden = true;
+  get('values').hidden = false;
+});
+get('example').addEventListener('click', () => {
+  mode.value = 'monthly';
+  syncWageLabel();
+  wage.value = 3000000;
+  group.value = 'extended';
+  period.value = '3';
+  form.requestSubmit();
+});
+</script>
+</body>
+</html>
